@@ -1,8 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:helmet_radio_com/handlers/sound_handler.dart';
 import 'package:mic_stream/mic_stream.dart';
 
 class MicHandler {
@@ -10,28 +10,28 @@ class MicHandler {
   bool isRecording = false;
   Random rng = Random();
   late StreamSubscription listener;
-  SoundHandler soundHandler;
+  Socket socket;
 
-  MicHandler(this.soundHandler);
+  MicHandler(this.socket);
 
-  startListening() async {
-    MicStream.shouldRequestPermission(true);
-
+  _startListening() async {
     stream = await MicStream.microphone(
         audioSource: AudioSource.MIC,
         sampleRate: 16000,
         channelConfig: ChannelConfig.CHANNEL_IN_MONO,
         audioFormat: AudioFormat.ENCODING_PCM_16BIT);
 
-    listener = stream!.listen((data) => {soundHandler.feed(data)});
+    listener = stream!.listen((data) {
+      socket.add(data);
+    });
   }
 
-  stopListening() {
-    listener.cancel();
+  _stopListening() async {
+    await listener.cancel();
   }
 
   micToggle() {
-    isRecording ? stopListening() : startListening();
+    isRecording ? _stopListening() : _startListening();
     isRecording = !isRecording;
   }
 

@@ -16,15 +16,15 @@ class SoundHandler {
   }
 
   toggle() {
-    isPlaying ? stop() : play();
+    isPlaying ? _stop() : _play();
     isPlaying = !isPlaying;
   }
 
-  play() async {
+  _play() async {
     await player.play();
   }
 
-  stop() async {
+  _stop() async {
     await player.stop();
   }
 

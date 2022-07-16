@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:network_info_plus/network_info_plus.dart';
-import 'package:helmet_radio_com/handlers/mic_handler.dart';
-import 'package:helmet_radio_com/handlers/sound_handler.dart';
+import 'package:helmet_radio_com/handlers/connection_handler.dart';
+import 'package:helmet_radio_com/handlers/permission_handler.dart';
+import 'package:helmet_radio_com/pages/call_page.dart';
+import 'package:helmet_radio_com/pages/qr_code_page.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 class HomePage extends StatefulWidget {
@@ -12,18 +13,29 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  SoundHandler soundHandler = SoundHandler();
-  late MicHandler micHandler = MicHandler(soundHandler);
-  final info = NetworkInfo();
+  PermissionHandler permissionHandler = PermissionHandler();
+  ConnectionHandler connectionHandler = ConnectionHandler();
 
-  handleCallControl() {
-    soundHandler.toggle();
-    micHandler.micToggle();
-    setState(() {});
+  @override
+  void initState() {
+    permissionHandler.requestPermissions();
+    super.initState();
   }
 
-  Future<String> getIp() async {
-    return (await info.getWifiIP())!;
+  openQRCodePage() async {
+    final qrCode = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) => const QRCodePage(),
+      ),
+    );
+    connectionHandler.connect(context, qrCode.code);
+    await Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) => CallPage(connectionHandler),
+      ),
+    );
   }
 
   @override
@@ -33,13 +45,18 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Helmet Intercom'),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: handleCallControl,
-        child: micHandler.getIcon(),
+        onPressed: openQRCodePage,
+        child: const Icon(Icons.camera_alt),
       ),
       body: FutureBuilder(
-        future: getIp(),
+        future: connectionHandler.getIp(),
         builder: (context, AsyncSnapshot<String> snapshot) {
           if (snapshot.hasData) {
+            if (snapshot.requireData == '') {
+              return const Center(
+                child: Text('Permissão de localização necessária.'),
+              );
+            }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
