@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:helmet_radio_com/handlers/connection_handler.dart';
 import 'package:helmet_radio_com/handlers/permission_handler.dart';
 import 'package:helmet_radio_com/pages/call_page.dart';
@@ -23,19 +24,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   openQRCodePage() async {
-    final qrCode = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) => const QRCodePage(),
-      ),
-    );
-    connectionHandler.connect(context, qrCode.code);
-    await Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (BuildContext context) => CallPage(connectionHandler),
-      ),
-    );
+    final qrCode = await Get.to(() => const QRCodePage());
+    if (!qrCode.code.isEmpty) {
+      connectionHandler.connect(context, qrCode.code);
+      Get.to(() => CallPage(connectionHandler));
+    }
   }
 
   @override

@@ -5,14 +5,17 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:mic_stream/mic_stream.dart';
 
+import 'connection_handler.dart';
+
 class MicHandler {
+  ConnectionHandler connectionHandler;
   Stream<Uint8List>? stream;
   bool isRecording = false;
   Random rng = Random();
   late StreamSubscription listener;
   Socket socket;
 
-  MicHandler(this.socket);
+  MicHandler(this.socket, this.connectionHandler);
 
   _startListening() async {
     stream = await MicStream.microphone(
@@ -21,9 +24,7 @@ class MicHandler {
         channelConfig: ChannelConfig.CHANNEL_IN_MONO,
         audioFormat: AudioFormat.ENCODING_PCM_16BIT);
 
-    listener = stream!.listen((data) {
-      socket.add(data);
-    });
+    listener = stream!.listen((data) => socket.add(data));
   }
 
   _stopListening() async {

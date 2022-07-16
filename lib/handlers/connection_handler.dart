@@ -9,15 +9,13 @@ import 'package:helmet_radio_com/pages/homepage.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 
 class ConnectionHandler {
+  static final ConnectionHandler _instance = ConnectionHandler._internal();
   SoundHandler soundHandler = SoundHandler();
   late ServerSocket server;
   late Socket calllSocket;
   late MicHandler micHandler;
   final info = NetworkInfo();
-
-  ConnectionHandler() {
-    startServer();
-  }
+  bool onCall = false;
 
   Future<String> getIp() async {
     return (await info.getWifiIP())!;
@@ -34,20 +32,31 @@ class ConnectionHandler {
   }
 
   endCall() {
-    micHandler.micToggle();
-    soundHandler.toggle();
-    calllSocket.close();
-    Get.to(const HomePage());
+    if (onCall) {
+      micHandler.micToggle();
+      soundHandler.toggle();
+      calllSocket.close();
+      Get.to(() => const HomePage());
+      onCall = false;
+    }
   }
 
   handleCommunication(Socket socket) {
+    onCall = true;
     calllSocket = socket;
-    micHandler = MicHandler(socket);
+    micHandler = MicHandler(socket, this);
     micHandler.micToggle();
     soundHandler.toggle();
     socket.listen((data) {
       soundHandler.feed(data);
     }, onDone: () => endCall());
     Get.to(() => CallPage(this));
+  }
+
+  factory ConnectionHandler() {
+    return _instance;
+  }
+  ConnectionHandler._internal() {
+    startServer();
   }
 }
