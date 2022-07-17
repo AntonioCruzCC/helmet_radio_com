@@ -21,7 +21,7 @@ class MicHandler {
     stream = await MicStream.microphone(
         audioSource: AudioSource.MIC,
         sampleRate: 16000,
-        channelConfig: ChannelConfig.CHANNEL_IN_MONO,
+        channelConfig: ChannelConfig.CHANNEL_IN_STEREO,
         audioFormat: AudioFormat.ENCODING_PCM_16BIT);
 
     listener = stream!.listen((data) => socket.add(data));

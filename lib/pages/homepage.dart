@@ -27,7 +27,7 @@ class _HomePageState extends State<HomePage> {
     final qrCode = await Get.to(() => const QRCodePage());
     if (!qrCode.code.isEmpty) {
       connectionHandler.connect(context, qrCode.code);
-      Get.to(() => CallPage(connectionHandler));
+      Get.lazyReplace(() => CallPage(connectionHandler));
     }
   }
 
@@ -54,8 +54,16 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: const Text(
+                    'Leia o QR Code abaixo com outro smartphone para inciar a chamada.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 25.0),
+                  ),
+                ),
                 Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(50.0),
                   child: Center(
                     child: QrImage(
                       data: snapshot.requireData,

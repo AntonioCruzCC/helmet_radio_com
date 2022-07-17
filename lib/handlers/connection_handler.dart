@@ -27,7 +27,9 @@ class ConnectionHandler {
   }
 
   connect(BuildContext context, String ip) async {
-    calllSocket = await Socket.connect(ip, 8080);
+    calllSocket = await Socket.connect(ip, 8080).onError(
+      (error, stackTrace) => endCall(),
+    );
     handleCommunication(calllSocket);
   }
 
@@ -36,9 +38,9 @@ class ConnectionHandler {
       micHandler.micToggle();
       soundHandler.toggle();
       calllSocket.close();
-      Get.to(() => const HomePage());
-      onCall = false;
     }
+    Get.lazyReplace(() => const HomePage());
+    onCall = false;
   }
 
   handleCommunication(Socket socket) {
@@ -50,7 +52,7 @@ class ConnectionHandler {
     socket.listen((data) {
       soundHandler.feed(data);
     }, onDone: () => endCall());
-    Get.to(() => CallPage(this));
+    Get.lazyReplace(() => CallPage(this));
   }
 
   factory ConnectionHandler() {

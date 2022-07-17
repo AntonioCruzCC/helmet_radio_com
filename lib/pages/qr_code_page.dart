@@ -38,7 +38,7 @@ class _QRCodePageState extends State<QRCodePage> {
             child: const Text(
               'Aponte a camera para o código QR no outro Smartphone',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 30.0),
+              style: TextStyle(fontSize: 25.0),
             ),
           ),
         ],
@@ -58,11 +58,13 @@ class _QRCodePageState extends State<QRCodePage> {
       key: qrKey,
       onQRViewCreated: _onQRViewCreated,
       overlay: QrScannerOverlayShape(
-          borderColor: Colors.red,
-          borderRadius: 10,
-          borderLength: 30,
-          borderWidth: 10,
-          cutOutSize: scanArea),
+        overlayColor: const Color.fromRGBO(229, 227, 244, 80),
+        borderColor: Colors.blueAccent,
+        borderRadius: 10,
+        borderLength: 30,
+        borderWidth: 10,
+        cutOutSize: scanArea,
+      ),
       onPermissionSet: (ctrl, p) => _onPermissionSet(context, ctrl, p),
     );
   }

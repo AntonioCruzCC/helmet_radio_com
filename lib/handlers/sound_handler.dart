@@ -9,7 +9,7 @@ class SoundHandler {
   SoundHandler() {
     player.initialize(
       bufferSize: 1024,
-      nChannels: 1,
+      nChannels: 2,
       sampleRate: 16000,
       pcmType: RawSoundPCMType.PCMI16,
     );
