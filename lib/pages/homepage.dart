@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_background/flutter_background.dart';
 import 'package:get/get.dart';
 import 'package:helmet_radio_com/handlers/connection_handler.dart';
 import 'package:helmet_radio_com/handlers/permission_handler.dart';
@@ -15,18 +16,30 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   PermissionHandler permissionHandler = PermissionHandler();
-  ConnectionHandler connectionHandler = ConnectionHandler();
+  late ConnectionHandler connectionHandler;
 
   @override
   void initState() {
     permissionHandler.requestPermissions();
+    const androidConfig = FlutterBackgroundAndroidConfig(
+      notificationTitle: "flutter_background example app",
+      notificationText:
+          "Background notification for keeping the example app running in the background",
+      notificationImportance: AndroidNotificationImportance.Default,
+      notificationIcon: AndroidResource(
+          name: 'background_icon',
+          defType: 'drawable'), // Default is ic_launcher from folder mipmap
+    );
+    FlutterBackground.initialize(androidConfig: androidConfig)
+        .then((value) => print(value));
+    connectionHandler = ConnectionHandler();
     super.initState();
   }
 
   openQRCodePage() async {
     final qrCode = await Get.to(() => const QRCodePage());
     if (!qrCode.code.isEmpty) {
-      connectionHandler.connect(context, qrCode.code);
+      connectionHandler.connect(qrCode.code);
       Get.lazyReplace(() => CallPage(connectionHandler));
     }
   }
@@ -57,7 +70,7 @@ class _HomePageState extends State<HomePage> {
                 SizedBox(
                   width: MediaQuery.of(context).size.width,
                   child: const Text(
-                    'Leia o QR Code abaixo com outro smartphone para inciar a chamada.',
+                    'Leia o QR Code abaixo com outro smartphone para iniciar a chamada.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 25.0),
                   ),

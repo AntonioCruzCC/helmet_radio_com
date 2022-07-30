@@ -13,9 +13,8 @@ class MicHandler {
   bool isRecording = false;
   Random rng = Random();
   late StreamSubscription listener;
-  Socket socket;
 
-  MicHandler(this.socket, this.connectionHandler);
+  MicHandler(this.connectionHandler);
 
   _startListening() async {
     stream = await MicStream.microphone(
@@ -24,7 +23,8 @@ class MicHandler {
         channelConfig: ChannelConfig.CHANNEL_IN_STEREO,
         audioFormat: AudioFormat.ENCODING_PCM_16BIT);
 
-    listener = stream!.listen((data) => socket.add(data));
+    listener =
+        stream!.listen((data) => connectionHandler.handleDataToBeSent(data));
   }
 
   _stopListening() async {

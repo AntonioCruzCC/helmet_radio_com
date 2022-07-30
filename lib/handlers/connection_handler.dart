@@ -1,6 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:helmet_radio_com/handlers/mic_handler.dart';
 import 'package:helmet_radio_com/handlers/sound_handler.dart';
@@ -11,48 +11,79 @@ import 'package:network_info_plus/network_info_plus.dart';
 class ConnectionHandler {
   static final ConnectionHandler _instance = ConnectionHandler._internal();
   SoundHandler soundHandler = SoundHandler();
-  late ServerSocket server;
-  late Socket calllSocket;
+  late String myIp;
+  String? sendIp;
+  late RawDatagramSocket socket;
+  late RawDatagramSocket callSocket;
   late MicHandler micHandler;
   final info = NetworkInfo();
+  final int port = 1234;
   bool onCall = false;
 
   Future<String> getIp() async {
-    return (await info.getWifiIP())!;
+    String? ip = await info.getWifiIP();
+    ip ??= InternetAddress.anyIPv4.address;
+    return ip;
   }
 
   startServer() async {
-    server = await ServerSocket.bind(await getIp(), 8080);
-    server.listen((client) => {handleCommunication(client)});
+    myIp = await getIp();
+    socket = await RawDatagramSocket.bind(myIp, port);
+    socket.listen((event) => {handleRawCommunication(event)});
   }
 
-  connect(BuildContext context, String ip) async {
-    calllSocket = await Socket.connect(ip, 8080).onError(
-      (error, stackTrace) => endCall(),
-    );
-    handleCommunication(calllSocket);
+  connect(String sendIp) async {
+    this.sendIp = sendIp;
+    handleRawCommunication(null);
   }
 
   endCall() {
     if (onCall) {
       micHandler.micToggle();
       soundHandler.toggle();
-      calllSocket.close();
+      socket.send([], InternetAddress(sendIp!), port);
     }
-    Get.lazyReplace(() => const HomePage());
+    Get.to(() => const HomePage());
     onCall = false;
   }
 
-  handleCommunication(Socket socket) {
-    onCall = true;
-    calllSocket = socket;
-    micHandler = MicHandler(socket, this);
+  handleRawCommunication(RawSocketEvent? event) {
+    if (event == null || event == RawSocketEvent.read) {
+      if (event != null) {
+        Datagram? dg = socket.receive();
+        if (dg == null) {
+          if (onCall) {
+            endCall();
+            return;
+          }
+        } else if (dg.data.every((element) => element == 1)) {
+          Get.to(() => CallPage(this));
+        }
+        sendIp = dg?.address.address;
+        handleReceivedData(dg!.data);
+      } else {
+        socket.send([1], InternetAddress(sendIp!), port);
+        Get.to(() => CallPage(this));
+      }
+
+      onCall = true;
+    }
+  }
+
+  toggleMicAndSound() {
+    micHandler = MicHandler(this);
     micHandler.micToggle();
     soundHandler.toggle();
-    socket.listen((data) {
-      soundHandler.feed(data);
-    }, onDone: () => endCall());
-    Get.lazyReplace(() => CallPage(this));
+  }
+
+  handleReceivedData(Uint8List data) {
+    soundHandler.feed(data);
+  }
+
+  handleDataToBeSent(Uint8List data) {
+    if (sendIp != null) {
+      socket.send(data, InternetAddress(sendIp!), port);
+    }
   }
 
   factory ConnectionHandler() {

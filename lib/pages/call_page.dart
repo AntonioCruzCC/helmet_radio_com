@@ -12,6 +12,12 @@ class CallPage extends StatefulWidget {
 
 class _CallPageState extends State<CallPage> {
   @override
+  void initState() {
+    widget.connectionHandler.toggleMicAndSound();
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
